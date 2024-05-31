@@ -1,4 +1,5 @@
 use log::debug;
+use std::collections::VecDeque;
 use std::fs::File;
 use std::io::{BufRead, BufReader};
 
@@ -7,7 +8,7 @@ pub fn parse_file_async<R, C>(
     threads: i32,
     line_handler: fn(String, C) -> Vec<R>,
     context: C,
-) -> Vec<R>
+) -> VecDeque<R>
 where
     R: Send,
     R: Sized,
@@ -61,7 +62,7 @@ where
             thread_handles.push(thread);
         }
 
-        let mut outputs = vec![];
+        let mut outputs = VecDeque::new();
         for handle in thread_handles {
             outputs.extend(handle.join().expect("Error joining thread"));
         }

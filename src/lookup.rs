@@ -1,4 +1,4 @@
-use std::collections::HashMap;
+use std::collections::{HashMap, VecDeque};
 
 use serde::{Deserialize, Serialize};
 
@@ -21,7 +21,7 @@ pub struct PageLookupResult {
 }
 
 impl PageLookup {
-    pub fn new(pages: Vec<Page>, redirect: Vec<Redirect>) -> Self {
+    pub fn new(pages: VecDeque<Page>, redirect: VecDeque<Redirect>) -> Self {
         let mut id_to_name = HashMap::new();
         let mut name_to_id = HashMap::new();
         let mut id_to_redirect = HashMap::new();
@@ -76,5 +76,13 @@ impl PageLookup {
             title,
             redirect,
         })
+    }
+
+    pub fn resolve_by_title(&self, title: &str) -> Option<PageLookupResult> {
+        let mut page = self.lookup_title(title)?;
+        while let Some(redirect) = page.redirect {
+            page = self.lookup_id(redirect)?;
+        }
+        Some(page)
     }
 }

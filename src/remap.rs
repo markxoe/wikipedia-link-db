@@ -1,18 +1,41 @@
+use serde::{Deserialize, Serialize};
+
 use crate::ResolvedLink;
-use std::collections::HashMap;
+use std::collections::{HashMap, VecDeque};
 
-pub type RemappedLinks = HashMap<i32, Vec<i32>>;
+#[derive(Debug, Serialize, Deserialize)]
+pub struct RemappedLinks {
+    forward: HashMap<i32, Vec<i32>>,
+}
 
-pub fn remap_links(links: Vec<ResolvedLink>) -> RemappedLinks {
-    let mut map: HashMap<i32, Vec<i32>> = HashMap::new();
+impl RemappedLinks {
+    pub fn new(mut links: VecDeque<ResolvedLink>) -> RemappedLinks {
+        let mut map: HashMap<i32, Vec<i32>> = HashMap::new();
 
-    for (from, to) in links {
-        if map.contains_key(&from) {
-            map.get_mut(&from).unwrap().push(to);
-        } else {
-            map.insert(from, vec![to]);
+        let mut links_counter = 0;
+
+        let shrink_every = {
+            let links_count = links.len();
+            links_count / 1000
+        };
+
+        while let Some((from, to)) = links.pop_front() {
+            if map.contains_key(&from) {
+                map.get_mut(&from).unwrap().push(to);
+            } else {
+                map.insert(from, vec![to]);
+            }
+
+            links_counter += 1;
+            if links_counter % shrink_every == 0 {
+                links.shrink_to_fit();
+            }
         }
+
+        RemappedLinks { forward: map }
     }
 
-    map
+    pub fn get(&self, from: i32) -> Option<&Vec<i32>> {
+        self.forward.get(&from)
+    }
 }

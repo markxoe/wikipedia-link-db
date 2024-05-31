@@ -1,3 +1,5 @@
+use std::collections::VecDeque;
+
 use regex::Regex;
 
 use crate::{common, lookup::PageLookup};
@@ -23,7 +25,11 @@ fn sync_parse_link_entry(line: String, (re, resolver): (Regex, &PageLookup)) -> 
     out
 }
 
-pub fn read_and_parse_links2(file: &str, threads: i32, resolver: &PageLookup) -> Vec<LinkResolved> {
+pub fn read_and_parse_links2(
+    file: &str,
+    threads: i32,
+    resolver: &PageLookup,
+) -> VecDeque<LinkResolved> {
     // note: namespace is fixed in regex to 0 (main namespace)
     let re = Regex::new(r"\(([0-9]+),0,'([^']+)',0,[0-9]*\)").expect("Invalid regex");
 

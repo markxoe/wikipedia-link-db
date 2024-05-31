@@ -1,34 +1,21 @@
 use std::collections::{HashMap, HashSet, VecDeque};
 
-use log::{debug, error};
+use log::debug;
 
 use crate::remap::RemappedLinks;
 
 pub fn find_shortest_path(start: i32, end: i32, links: &RemappedLinks) -> Option<Vec<i32>> {
     let mut queue = VecDeque::new();
     let mut predecessor = HashMap::new();
-    let mut visited = HashSet::new();
+    let mut visited = HashSet::new(); // note: having a set of visited nodes improves performance by a few percent while increasing memory usage
     queue.push_back(start);
+    predecessor.insert(start, start);
     visited.insert(start);
 
     let mut steps: u64 = 0;
-    let start_time = std::time::Instant::now();
-    let mut path = None;
 
     while let Some(at) = queue.pop_front() {
-        if at == end {
-            let mut out_path = VecDeque::new();
-            out_path.push_front(at);
-            let mut at = at;
-            while let Some(&node) = predecessor.get(&at) {
-                out_path.push_front(node);
-                at = node;
-            }
-            path = Some(Vec::from(out_path));
-            break;
-        }
-
-        let neighbors = links.get(&at);
+        let neighbors = links.get(at);
         if neighbors.is_none() {
             continue;
         }
@@ -38,21 +25,28 @@ pub fn find_shortest_path(start: i32, end: i32, links: &RemappedLinks) -> Option
             }
 
             queue.push_back(neighbor);
-            visited.insert(neighbor);
             predecessor.insert(neighbor, at);
+            visited.insert(neighbor);
+
+            if neighbor == end {
+                let mut out_path = VecDeque::new();
+                out_path.push_front(neighbor);
+                let mut at = neighbor;
+                while let Some(&node) = predecessor.get(&at) {
+                    if at == start {
+                        break;
+                    }
+                    out_path.push_front(node);
+                    at = node;
+                }
+
+                debug!("Found path in {} steps", steps);
+                return Some(Vec::from(out_path));
+            }
         }
 
         steps += 1;
-        if steps % 10000 == 0 {
-            if start_time.elapsed().as_secs() > 5 {
-                error!("Took too long to find path, tried {steps} pages");
-
-                break;
-            }
-        }
     }
 
-    debug!("Found path in {} steps", steps);
-
-    path
+    None
 }

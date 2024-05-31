@@ -5,7 +5,7 @@ use std::{thread::sleep, time::Duration};
 
 use crate::{
     lookup::{PageLookup, PageLookupResult},
-    remap::remap_links,
+    remap::RemappedLinks,
 };
 
 mod links;
@@ -96,7 +96,7 @@ fn derive_db_command(config: SubCommands, threads: i32) {
     );
 
     info!("Optimizing Link Map");
-    let links = remap_links(links);
+    let links = RemappedLinks::new(links);
 
     info!("Serializing and writing to file...");
 
@@ -117,31 +117,6 @@ fn test_command(config: SubCommands) {
     let links = data.links;
     let lookup = data.pages;
 
-    fn resolve_page(name: String, pages: &PageLookup) -> Option<PageLookupResult> {
-        let start_page = pages.lookup_title(&name);
-        if start_page.is_none() {
-            println!("Page not found");
-            return None;
-        }
-        let start_page = start_page.unwrap();
-
-        if start_page.redirect.is_some() {
-            let redirect = start_page.redirect.unwrap();
-            let redirect = pages.lookup_id(redirect);
-            if redirect.is_none() {
-                println!("Redirect not found");
-                return None;
-            }
-            let redirect = redirect.unwrap();
-
-            println!("FYI: Page is a redirect to {}", redirect.title);
-
-            return Some(redirect);
-        }
-
-        Some(start_page)
-    }
-
     fn page_input_loop<'a>(prompt: &str, pages: &'a PageLookup) -> Option<PageLookupResult> {
         loop {
             let input = inquire::Text::new(prompt).prompt();
@@ -150,7 +125,7 @@ fn test_command(config: SubCommands) {
             }
 
             let input = input.unwrap().replace(" ", "_");
-            let page = resolve_page(input, pages);
+            let page = pages.resolve_by_title(&input);
             if page.is_none() {
                 println!("Page not found");
                 continue;
