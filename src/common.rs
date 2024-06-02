@@ -3,6 +3,23 @@ use std::collections::VecDeque;
 use std::fs::File;
 use std::io::{BufRead, BufReader};
 
+use crate::indication;
+
+pub fn get_file_line_count(file: &str) -> u64 {
+    let spinner = indication::spinner();
+    spinner.set_message(format!("Loading line count for {file}"));
+    spinner.enable_steady_tick(std::time::Duration::from_millis(100));
+
+    let file_ptr = File::open(file).expect("Unable to open file");
+    let reader = BufReader::new(file_ptr);
+
+    let count = reader.lines().count() as u64;
+
+    spinner.finish_and_clear();
+
+    count
+}
+
 pub fn parse_file_async<R, C>(
     file: String,
     threads: i32,

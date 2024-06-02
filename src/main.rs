@@ -1,7 +1,8 @@
 use clap::{Parser, Subcommand};
+use indication::{spinner, ProgressBuilder};
 use log::info;
 
-use std::{thread::sleep, time::Duration};
+use std::time::Duration;
 
 use crate::{
     lookup::{PageLookup, PageLookupResult},
@@ -13,6 +14,7 @@ mod pages;
 mod redirects;
 
 mod common;
+mod indication;
 mod lookup;
 mod remap;
 mod serialize;
@@ -67,11 +69,23 @@ fn derive_db_command(config: SubCommands, threads: i32) {
         _ => unreachable!(),
     };
 
-    info!("Acquiring pages and redirects...");
-
     let (pages, redirects) = {
-        let pages = pages::read_and_parse_pages(pages_sql, threads);
-        let redirects = redirects::read_and_parse_redirects(redirects_sql, threads);
+        let pages = pages::read_and_parse_pages(
+            pages_sql,
+            threads,
+            ProgressBuilder::new()
+                .with_steps(1, 6)
+                .with_message("Loading pages...")
+                .with_finish_message("Pages loaded"),
+        );
+        let redirects = redirects::read_and_parse_redirects(
+            redirects_sql,
+            threads,
+            ProgressBuilder::new()
+                .with_steps(2, 6)
+                .with_message("Loading redirects...")
+                .with_finish_message("Redirects loaded"),
+        );
 
         (pages, redirects)
     };
@@ -82,27 +96,43 @@ fn derive_db_command(config: SubCommands, threads: i32) {
         redirects.len()
     );
 
-    info!("Optimizing Page map");
-    let lookup = lookup::PageLookup::new(pages, redirects);
-
-    info!("Acquiring links...");
-    let links = links::read_and_parse_links2(links_sql.as_str(), threads, &lookup);
-
-    println!(
-        "Got {} links (cap: {}, takes up {} kb)",
-        links.len(),
-        links.capacity(),
-        links.capacity() * std::mem::size_of::<ResolvedLink>() / 1000
+    let lookup = lookup::PageLookup::new_with_progress(
+        pages,
+        redirects,
+        ProgressBuilder::new()
+            .with_steps(3, 6)
+            .with_message("Remapping pages...")
+            .with_finish_message("Pages remapped"),
     );
 
-    info!("Optimizing Link Map");
-    let links = RemappedLinks::new(links);
+    let links = links::read_and_parse_links2(
+        links_sql.as_str(),
+        threads,
+        &lookup,
+        ProgressBuilder::new()
+            .with_steps(4, 6)
+            .with_message("Loading links...")
+            .with_finish_message("Links loaded"),
+    );
 
-    info!("Serializing and writing to file...");
+    let links = RemappedLinks::new_with_progress(
+        links,
+        ProgressBuilder::new()
+            .with_steps(5, 6)
+            .with_message("Remapping links...")
+            .with_finish_message("Links remapped"),
+    );
 
-    serialize::serialize(output.as_str(), &links, &lookup);
-
-    sleep(Duration::from_secs(7));
+    {
+        let spinner = ProgressBuilder::spinner()
+            .with_message("Serializing and writing file")
+            .with_steps(6, 6)
+            .with_finish_message("Serialized and written to file")
+            .build();
+        spinner.enable_background();
+        serialize::serialize(output.as_str(), &links, &lookup);
+        spinner.finish();
+    }
 }
 
 fn test_command(config: SubCommands) {
@@ -111,8 +141,11 @@ fn test_command(config: SubCommands) {
         _ => unreachable!(),
     };
 
-    println!("Loading db...");
+    let spinner = spinner();
+    spinner.set_message("📝 Deserializing DB");
+    spinner.enable_steady_tick(Duration::from_millis(100));
     let data = serialize::deserialize(&db);
+    spinner.finish_with_message("📝 Deserialized DB");
 
     let links = data.links;
     let lookup = data.pages;

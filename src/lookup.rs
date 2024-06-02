@@ -2,7 +2,7 @@ use std::collections::{HashMap, VecDeque};
 
 use serde::{Deserialize, Serialize};
 
-use crate::{pages::Page, redirects::Redirect};
+use crate::{indication::ProgressBuilder, pages::Page, redirects::Redirect};
 
 #[derive(Serialize, Deserialize)]
 pub struct PageLookup {
@@ -21,7 +21,15 @@ pub struct PageLookupResult {
 }
 
 impl PageLookup {
-    pub fn new(pages: VecDeque<Page>, redirect: VecDeque<Redirect>) -> Self {
+    fn new_internal(
+        pages: VecDeque<Page>,
+        redirect: VecDeque<Redirect>,
+        progress: ProgressBuilder,
+    ) -> Self {
+        let progress = progress
+            .with_len((pages.len() + redirect.len()) as u64)
+            .build();
+
         let mut id_to_name = HashMap::new();
         let mut name_to_id = HashMap::new();
         let mut id_to_redirect = HashMap::new();
@@ -29,6 +37,8 @@ impl PageLookup {
         for page in pages {
             id_to_name.insert(page.id, page.title.clone());
             name_to_id.insert(page.title.clone(), page.id);
+
+            progress.inc(1);
         }
 
         for redirect in redirect {
@@ -37,13 +47,29 @@ impl PageLookup {
             if let Some(&to) = to {
                 id_to_redirect.insert(from, to);
             }
+
+            progress.inc(1);
         }
+
+        progress.finish();
 
         Self {
             id_to_name,
             name_to_id,
             id_to_redirect,
         }
+    }
+
+    pub fn new(pages: VecDeque<Page>, redirect: VecDeque<Redirect>) -> Self {
+        Self::new_internal(pages, redirect, ProgressBuilder::empty())
+    }
+
+    pub fn new_with_progress(
+        pages: VecDeque<Page>,
+        redirect: VecDeque<Redirect>,
+        progress: ProgressBuilder,
+    ) -> Self {
+        Self::new_internal(pages, redirect, progress)
     }
 
     pub fn name_to_id(&self, name: &str) -> Option<i32> {
