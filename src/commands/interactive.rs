@@ -70,12 +70,15 @@ fn interactive_cmd(args: &InteractiveArgs) {
         let start = start.unwrap();
         let end = end.unwrap();
 
+        let time_before = std::time::Instant::now();
         let path = bfs::find_shortest_path(start.id, end.id, &links);
+        let time = time_before.elapsed().as_millis();
+
         if path.is_none() {
             println!("No path found");
             continue;
         } else {
-            println!("Path found");
+            println!("Path found in {time}ms");
             for page in path.unwrap() {
                 let page = lookup.id_to_name(page).unwrap();
                 println!("\t{}", page);
