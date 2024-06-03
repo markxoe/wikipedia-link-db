@@ -36,6 +36,11 @@ fn interactive_cmd(args: &InteractiveArgs) {
     let data = database::deserialize(&db);
     spinner.finish();
 
+    println!(
+        "Usage: Enter a start page and a target page to find the shortest path between them
+If you want to exit press ctrl+d or ctrl+c\n"
+    );
+
     let links = data.links;
     let lookup = data.pages;
 
@@ -58,7 +63,7 @@ fn interactive_cmd(args: &InteractiveArgs) {
     }
 
     loop {
-        let start = page_input_loop("Enter a page name", &lookup);
+        let start = page_input_loop("Enter a start page name", &lookup);
         if start.is_none() {
             break;
         }
