@@ -43,3 +43,7 @@ Using the database using the `interactive` command
 ```
 
 4. Use the `interactive` command to interactively query paths from the db: `./target/release/wikipedia-link-db interactive -d output.db`
+
+## License
+
+[MIT License](./LICENSE)
