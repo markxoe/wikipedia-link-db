@@ -39,6 +39,7 @@ impl LinkMap {
             }
 
             links_counter += 1;
+
             if links_counter % shrink_every == 0 {
                 links.shrink_to_fit();
             }
