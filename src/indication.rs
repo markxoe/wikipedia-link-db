@@ -60,7 +60,7 @@ impl ProgressReporter {
         finish_message: Option<&'static str>,
         steps: Option<(u8, u8)>,
     ) -> Self {
-        let progress = spinner(if let Some(_) = steps { true } else { false });
+        let progress = spinner(steps.is_some());
         progress.set_message(message.clone());
 
         if let Some((step, steps)) = steps {
@@ -177,7 +177,7 @@ impl ProgressBuilder {
     }
 
     fn build_progress(self) -> ProgressReporter {
-        let len = self.len.unwrap() as u64;
+        let len = self.len.unwrap();
         let message = self.message.unwrap();
         let steps = self.steps.unwrap();
         let step = self.step.unwrap();
@@ -191,15 +191,9 @@ impl ProgressBuilder {
         let message = self.message.unwrap();
         let finish_message = self.finish_message;
 
-        let steps = if let Some(steps) = self.steps {
-            if let Some(step) = self.step {
-                Some((step, steps))
-            } else {
-                None
-            }
-        } else {
-            None
-        };
+        let steps = self
+            .steps
+            .map(|steps| (steps, self.step.expect("only steps given, no step")));
 
         ProgressReporter::new_spinner(message, finish_message, steps)
     }

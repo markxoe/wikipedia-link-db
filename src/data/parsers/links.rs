@@ -40,9 +40,7 @@ pub fn read_and_parse_links2(
     // note: namespace is fixed in regex to 0 (main namespace)
     let re = Regex::new(r"\(([0-9]+),0,'([^']+)',0,[0-9]*\)").expect("Invalid regex");
 
-    let progress = progress
-        .with_len(common::get_file_line_count(&file))
-        .build();
+    let progress = progress.with_len(common::get_file_line_count(file)).build();
 
     let out = common::parse_file_async(
         file.to_string(),

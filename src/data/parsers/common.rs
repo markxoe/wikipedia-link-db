@@ -42,16 +42,13 @@ where
         let file_ptr = File::open(file).expect("Unable to open file");
         let reader = BufReader::new(file_ptr);
 
-        let mut i = 0;
-
-        for line in reader.lines().into_iter() {
+        for (i, line) in reader.lines().enumerate() {
             let line = line.unwrap();
             tx.send(line).expect("Error sending line");
 
             if i % 100 == 0 {
                 debug!("Read {} lines", i);
             }
-            i += 1;
         }
     });
 
