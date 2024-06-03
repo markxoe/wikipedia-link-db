@@ -5,6 +5,10 @@ use log::debug;
 use crate::data::maps::link_map::LinkMap;
 
 pub fn find_shortest_path(start: i32, end: i32, links: &LinkMap) -> Option<Vec<i32>> {
+    if start == end {
+        return Some(vec![start]);
+    }
+
     let mut queue = VecDeque::new();
     let mut predecessor = HashMap::new();
     let mut visited = HashSet::new(); // note: having a set of visited nodes improves performance by a few percent while increasing memory usage
@@ -65,6 +69,30 @@ mod test {
         let path = super::find_shortest_path(1, 2, &link_map);
 
         assert_eq!(path, Some(vec![1, 2]));
+    }
+
+    #[test]
+    fn start_is_end() {
+        let link_map = LinkMap::new_with_progress(
+            vec![(1, 2), (1, 3), (3, 2)].into_iter().collect(),
+            ProgressBuilder::empty(),
+        );
+
+        let path = super::find_shortest_path(1, 1, &link_map);
+
+        assert_eq!(path, Some(vec![1]));
+    }
+
+    #[test]
+    fn no_way() {
+        let link_map = LinkMap::new_with_progress(
+            vec![(1, 2), (1, 3), (3, 2)].into_iter().collect(),
+            ProgressBuilder::empty(),
+        );
+
+        let path = super::find_shortest_path(2, 1, &link_map);
+
+        assert_eq!(path, None);
     }
 
     #[test]

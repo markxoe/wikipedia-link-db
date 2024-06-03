@@ -57,7 +57,7 @@ impl LinkMap {
 
 #[test]
 fn new_link_map() {
-    let links = VecDeque::from(vec![(1, 2), (1, 3), (3, 2)]);
+    let links = vec![(1, 2), (1, 3), (3, 2)].into_iter().collect();
 
     let map = LinkMap::new_with_progress(links, ProgressBuilder::empty());
 

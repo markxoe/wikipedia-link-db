@@ -1,5 +1,3 @@
-use std::time::Duration;
-
 use clap::Args;
 
 use crate::{
@@ -8,7 +6,7 @@ use crate::{
         database,
         maps::page_map::{PageMap, PageMapResult},
     },
-    indication::{spinner, ProgressBuilder},
+    indication::ProgressBuilder,
 };
 
 use super::ArgExecutor;
