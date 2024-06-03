@@ -42,14 +42,14 @@ If you want to exit press ctrl+d or ctrl+c\n"
     let links = data.links;
     let lookup = data.pages;
 
-    fn page_input_loop<'a>(prompt: &str, pages: &'a PageMap) -> Option<PageMapResult> {
+    fn page_input_loop(prompt: &str, pages: &PageMap) -> Option<PageMapResult> {
         loop {
             let input = inquire::Text::new(prompt).prompt();
             if input.is_err() {
                 return None;
             }
 
-            let input = input.unwrap().replace(" ", "_");
+            let input = input.unwrap().replace(' ', "_");
             let page = pages.resolve_by_title(&input);
             if page.is_none() {
                 println!("Page not found");

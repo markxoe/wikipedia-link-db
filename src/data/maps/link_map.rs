@@ -29,13 +29,17 @@ impl LinkMap {
         };
 
         while let Some((from, to)) = links.pop_front() {
-            if map.contains_key(&from) {
-                map.get_mut(&from).unwrap().push(to);
-            } else {
-                map.insert(from, vec![to]);
+            match map.entry(from) {
+                std::collections::hash_map::Entry::Vacant(e) => {
+                    e.insert(vec![to]);
+                }
+                std::collections::hash_map::Entry::Occupied(mut e) => {
+                    e.get_mut().push(to);
+                }
             }
 
             links_counter += 1;
+
             if links_counter % shrink_every == 0 {
                 links.shrink_to_fit();
             }
