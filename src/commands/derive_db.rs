@@ -87,7 +87,7 @@ fn derive_db_command(args: DeriveDbArgs) {
             .with_finish_message("Pages remapped"),
     );
 
-    let links = links::read_and_parse_links2(
+    let links = links::read_and_parse_links(
         pagelinks_sql.as_str(),
         threads,
         &lookup,

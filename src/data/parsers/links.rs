@@ -31,7 +31,7 @@ fn sync_parse_link_entry(
     out
 }
 
-pub fn read_and_parse_links2(
+pub fn read_and_parse_links(
     file: &str,
     threads: i32,
     resolver: &PageMap,
