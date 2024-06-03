@@ -16,12 +16,16 @@ fn progressbar_template(len: u64) -> ProgressBar {
     pb
 }
 
-pub fn spinner() -> ProgressBar {
+pub fn spinner(with_prefix: bool) -> ProgressBar {
     let pb = ProgressBar::new_spinner();
     pb.set_style(
         ProgressStyle::default_spinner()
             .tick_chars("-\\|/#")
-            .template("{prefix:>5.bold.dim} [{elapsed_precise:.yellow}] {spinner:.green} {msg}")
+            .template(if with_prefix {
+                "{prefix:>5.bold.dim} [{elapsed_precise:.yellow}] {spinner:.green} {msg}"
+            } else {
+                "[{elapsed_precise:.yellow}] {spinner:.green} {msg}"
+            })
             .unwrap(),
     );
 
@@ -56,7 +60,7 @@ impl ProgressReporter {
         finish_message: Option<&'static str>,
         steps: Option<(u8, u8)>,
     ) -> Self {
-        let progress = spinner();
+        let progress = spinner(if let Some(_) = steps { true } else { false });
         progress.set_message(message.clone());
 
         if let Some((step, steps)) = steps {
@@ -93,7 +97,7 @@ impl ProgressReporter {
             if let Some(message) = self.finish_message {
                 pb.finish_with_message(message);
             } else {
-                pb.finish();
+                pb.finish_and_clear();
             }
         }
     }

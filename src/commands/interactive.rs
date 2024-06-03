@@ -8,7 +8,7 @@ use crate::{
         database,
         maps::page_map::{PageMap, PageMapResult},
     },
-    indication::spinner,
+    indication::{spinner, ProgressBuilder},
 };
 
 use super::ArgExecutor;
@@ -29,11 +29,17 @@ impl ArgExecutor for InteractiveArgs {
 fn interactive_cmd(args: &InteractiveArgs) {
     let db = args.db.to_string();
 
-    let spinner = spinner();
-    spinner.set_message("📝 Deserializing DB");
-    spinner.enable_steady_tick(Duration::from_millis(100));
+    let spinner = ProgressBuilder::spinner()
+        .with_message("📝 Deserializing DB")
+        .build();
+    spinner.enable_background();
     let data = database::deserialize(&db);
-    spinner.finish_with_message("📝 Deserialized DB");
+    spinner.finish();
+
+    println!(
+        "Usage: Enter a start page and a target page to find the shortest path between them
+If you want to exit press ctrl+d or ctrl+c\n"
+    );
 
     let links = data.links;
     let lookup = data.pages;
@@ -57,7 +63,7 @@ fn interactive_cmd(args: &InteractiveArgs) {
     }
 
     loop {
-        let start = page_input_loop("Enter a page name", &lookup);
+        let start = page_input_loop("Enter a start page name", &lookup);
         if start.is_none() {
             break;
         }
@@ -70,12 +76,26 @@ fn interactive_cmd(args: &InteractiveArgs) {
         let start = start.unwrap();
         let end = end.unwrap();
 
-        let path = bfs::find_shortest_path(start.id, end.id, &links);
+        let (path, time) = {
+            let time_before = std::time::Instant::now();
+            let spinner = ProgressBuilder::spinner()
+                .with_message("Searching for path")
+                .build();
+            spinner.enable_background();
+
+            let path = bfs::find_shortest_path(start.id, end.id, &links);
+            let time = time_before.elapsed().as_millis();
+
+            spinner.finish();
+
+            (path, time)
+        };
+
         if path.is_none() {
-            println!("No path found");
+            println!("😔 No path found");
             continue;
         } else {
-            println!("Path found");
+            println!("🎉 Path found in {time}ms");
             for page in path.unwrap() {
                 let page = lookup.id_to_name(page).unwrap();
                 println!("\t{}", page);

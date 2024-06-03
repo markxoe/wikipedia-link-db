@@ -6,7 +6,7 @@ use std::io::{BufRead, BufReader};
 use crate::indication;
 
 pub fn get_file_line_count(file: &str) -> u64 {
-    let spinner = indication::spinner();
+    let spinner = indication::spinner(true); // with progress, should fit the other progress bars
     spinner.set_message(format!("Loading line count for {file}"));
     spinner.enable_steady_tick(std::time::Duration::from_millis(100));
 
