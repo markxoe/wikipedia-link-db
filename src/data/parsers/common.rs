@@ -32,6 +32,10 @@ where
     C: Clone,
     C: Send,
 {
+    if threads < 2 {
+        panic!("Threads must be greater than or equal 2");
+    }
+
     let (tx, rx) = crossbeam_channel::bounded(0);
 
     let reader_thread = std::thread::spawn(move || {
@@ -90,4 +94,106 @@ where
     reader_thread.join().expect("Error joining thread");
 
     output
+}
+
+mod test {
+    #[allow(unused_imports)]
+    use std::{
+        env::temp_dir,
+        io::Write,
+        sync::{Arc, Mutex},
+    };
+
+    mod line_count {
+        #[allow(unused_imports)]
+        use std::{env::temp_dir, io::Write};
+
+        #[test]
+        fn empty_file() {
+            let dir = temp_dir();
+            let file_path = dir.join("test1.txt");
+
+            // create file
+            {
+                let _file = std::fs::File::create(&file_path).expect("Unable to create file");
+            }
+
+            let count = super::super::get_file_line_count(file_path.to_str().unwrap());
+
+            assert_eq!(count, 0);
+        }
+
+        #[test]
+        fn single_line() {
+            let dir = temp_dir();
+            let file_path = dir.join("test2.txt");
+
+            // create file
+            {
+                let mut file = std::fs::File::create(&file_path).expect("Unable to create file");
+                writeln!(file, "test").expect("Unable to write to file");
+            }
+
+            let count = super::super::get_file_line_count(file_path.to_str().unwrap());
+
+            assert_eq!(count, 1);
+        }
+
+        #[test]
+        fn multiple_lines() {
+            let dir = temp_dir();
+            let file_path = dir.join("test3.txt");
+
+            // create file
+            {
+                let file = std::fs::File::create(&file_path).expect("Unable to create file");
+                let mut file = std::io::BufWriter::new(file);
+                for _ in 0..1000 {
+                    writeln!(file, "Test").expect("Unable to write to file");
+                }
+                file.flush().expect("Unable to flush file");
+            }
+
+            let count = super::super::get_file_line_count(file_path.to_str().unwrap());
+
+            assert_eq!(count, 1000);
+        }
+    }
+
+    #[test]
+    fn all_lines_are_read() {
+        let dir = temp_dir();
+        let file_path = dir.join("test.txt");
+
+        // create file
+        {
+            let file = std::fs::File::create(&file_path).expect("Unable to create file");
+            let mut writer = std::io::BufWriter::new(file);
+            for i in 0..1000 {
+                writeln!(writer, "{}", i).expect("Unable to write to file");
+            }
+        }
+
+        let call_count = Arc::new(Mutex::new(0));
+
+        // parse file
+        let result = super::parse_file_async(
+            file_path.to_str().unwrap().to_string(),
+            2,
+            |line, ctx| {
+                *ctx.lock().unwrap() += 1;
+                vec![line.parse::<i32>().unwrap()]
+            },
+            call_count.clone(),
+        );
+
+        // check that all lines are read
+        assert_eq!(result.len(), 1000);
+        for i in 0..1000 {
+            assert!(result.contains(&i));
+        }
+
+        // check parser call count
+        assert_eq!(*call_count.lock().unwrap(), 1000);
+    }
 }

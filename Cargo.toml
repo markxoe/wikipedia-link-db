@@ -13,3 +13,4 @@ inquire = "0.7.5"
 log = { version = "0.4.21", features = ["std"] }
 regex = { version = "1.10.4", features = ["std"] }
 serde = { version = "1.0.202", features = ["derive"] }
+tempfile = "3.10.1"
