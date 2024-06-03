@@ -4,7 +4,7 @@ Primary goal of this project: Build a program that can quickly return the shorte
 
 ## Implementation details
 
-- Reading the Wikipedia dump `-page.sql`, `-redirect.sql` and `-pagelinks.sql` using one file-reading thread (line-by-line) and at least one parsing thread (work is spread with a queue) which uses a regex that parses the sql insert statements
+- Reading the Wikipedia dump files `-page.sql`, `-redirect.sql` and `-pagelinks.sql` using one file-reading thread (line-by-line) and at least one parsing thread (work is spread with a queue) which uses a regex that parses the sql insert statements
 - Remapping the page-, redirect- and link-lists into hashmaps that can be (de-)serialized in cbor format
 - Shortest-path search using BFS
 
@@ -20,8 +20,12 @@ Using the database using the `interactive` command
 
 - Loading took 6 seconds
 - Uses 1.9 GB RAM (htop, before querying)
+- A few test queries:
+  - `Seekröten` > `Linux`: 6ms (Path length: 3 (including end page, excluding start page))
+  - `Briefmarke` > `Linux Torvalds`: 53ms (Path length: 3)
+  - `Wasserrakete` > `Punktierter Stumpfzangenläufer`: 2152ms (Path length: 6)
 
-## Using
+## Usage
 
 1. Build the project, ideally in release mode (use `cargo build -r` or just use `cargo run -r --` to run)
 
