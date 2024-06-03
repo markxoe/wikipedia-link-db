@@ -29,7 +29,7 @@ impl ArgExecutor for InteractiveArgs {
 fn interactive_cmd(args: &InteractiveArgs) {
     let db = args.db.to_string();
 
-    let spinner = spinner();
+    let spinner = spinner(false);
     spinner.set_message("📝 Deserializing DB");
     spinner.enable_steady_tick(Duration::from_millis(100));
     let data = database::deserialize(&db);
