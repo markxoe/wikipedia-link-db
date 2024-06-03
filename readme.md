@@ -36,6 +36,10 @@ Using the database using the `interactive` command
    3. Download `-page.sql.gz`, `-pagelinks.sql.gz` and `-redirect.sql.gz`
    4. Extract `.gz` files
 
-3. Derive Database from the downloaded files: `./target/release/wikipedia-link-db derive-db -p {file prefix}-page.sql -r {file prefix}-redirect.sql -l {file prefix}-pagelinks.sql -o output.db -t {number of threads to use}`
+3. Derive Database from the downloaded files:
+
+```bash
+./target/release/wikipedia-link-db derive-db -p {file prefix}-page.sql -r {file prefix}-redirect.sql -l {file prefix}-pagelinks.sql -o output.db -t {number of threads to use}
+```
 
 4. Use the `interactive` command to interactively query paths from the db: `./target/release/wikipedia-link-db interactive -d output.db`
