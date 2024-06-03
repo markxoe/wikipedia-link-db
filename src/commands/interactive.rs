@@ -8,7 +8,7 @@ use crate::{
         database,
         maps::page_map::{PageMap, PageMapResult},
     },
-    indication::spinner,
+    indication::{spinner, ProgressBuilder},
 };
 
 use super::ArgExecutor;
@@ -29,11 +29,12 @@ impl ArgExecutor for InteractiveArgs {
 fn interactive_cmd(args: &InteractiveArgs) {
     let db = args.db.to_string();
 
-    let spinner = spinner(false);
-    spinner.set_message("📝 Deserializing DB");
-    spinner.enable_steady_tick(Duration::from_millis(100));
+    let spinner = ProgressBuilder::spinner()
+        .with_message("📝 Deserializing DB")
+        .build();
+    spinner.enable_background();
     let data = database::deserialize(&db);
-    spinner.finish_with_message("📝 Deserialized DB");
+    spinner.finish();
 
     let links = data.links;
     let lookup = data.pages;
@@ -70,15 +71,26 @@ fn interactive_cmd(args: &InteractiveArgs) {
         let start = start.unwrap();
         let end = end.unwrap();
 
-        let time_before = std::time::Instant::now();
-        let path = bfs::find_shortest_path(start.id, end.id, &links);
-        let time = time_before.elapsed().as_millis();
+        let (path, time) = {
+            let time_before = std::time::Instant::now();
+            let spinner = ProgressBuilder::spinner()
+                .with_message("Searching for path")
+                .build();
+            spinner.enable_background();
+
+            let path = bfs::find_shortest_path(start.id, end.id, &links);
+            let time = time_before.elapsed().as_millis();
+
+            spinner.finish();
+
+            (path, time)
+        };
 
         if path.is_none() {
-            println!("No path found");
+            println!("😔 No path found");
             continue;
         } else {
-            println!("Path found in {time}ms");
+            println!("🎉 Path found in {time}ms");
             for page in path.unwrap() {
                 let page = lookup.id_to_name(page).unwrap();
                 println!("\t{}", page);

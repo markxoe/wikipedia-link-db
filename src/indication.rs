@@ -97,7 +97,7 @@ impl ProgressReporter {
             if let Some(message) = self.finish_message {
                 pb.finish_with_message(message);
             } else {
-                pb.finish();
+                pb.finish_and_clear();
             }
         }
     }
