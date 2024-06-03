@@ -2,9 +2,9 @@ use std::collections::{HashMap, HashSet, VecDeque};
 
 use log::debug;
 
-use crate::remap::RemappedLinks;
+use crate::data::maps::link_map::LinkMap;
 
-pub fn find_shortest_path(start: i32, end: i32, links: &RemappedLinks) -> Option<Vec<i32>> {
+pub fn find_shortest_path(start: i32, end: i32, links: &LinkMap) -> Option<Vec<i32>> {
     let mut queue = VecDeque::new();
     let mut predecessor = HashMap::new();
     let mut visited = HashSet::new(); // note: having a set of visited nodes improves performance by a few percent while increasing memory usage

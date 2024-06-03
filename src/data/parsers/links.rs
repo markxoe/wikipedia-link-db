@@ -3,16 +3,13 @@ use std::collections::VecDeque;
 use regex::Regex;
 
 use crate::{
-    common::{self, get_file_line_count},
+    data::{links::LinkResolved, maps::page_map::PageMap, parsers::common},
     indication::{ProgressBuilder, ProgressReporter},
-    lookup::PageLookup,
 };
-
-type LinkResolved = (i32, i32);
 
 fn sync_parse_link_entry(
     line: String,
-    (re, resolver, progress): (Regex, &PageLookup, &ProgressReporter),
+    (re, resolver, progress): (Regex, &PageMap, &ProgressReporter),
 ) -> Vec<LinkResolved> {
     let mut out = vec![];
 
@@ -37,13 +34,15 @@ fn sync_parse_link_entry(
 pub fn read_and_parse_links2(
     file: &str,
     threads: i32,
-    resolver: &PageLookup,
+    resolver: &PageMap,
     progress: ProgressBuilder,
 ) -> VecDeque<LinkResolved> {
     // note: namespace is fixed in regex to 0 (main namespace)
     let re = Regex::new(r"\(([0-9]+),0,'([^']+)',0,[0-9]*\)").expect("Invalid regex");
 
-    let progress = progress.with_len(get_file_line_count(&file)).build();
+    let progress = progress
+        .with_len(common::get_file_line_count(&file))
+        .build();
 
     let out = common::parse_file_async(
         file.to_string(),

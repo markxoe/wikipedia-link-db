@@ -1,11 +1,12 @@
+use crate::{
+    data::{pages::Page, redirects::Redirect},
+    indication::ProgressBuilder,
+};
+use serde::{Deserialize, Serialize};
 use std::collections::{HashMap, VecDeque};
 
-use serde::{Deserialize, Serialize};
-
-use crate::{indication::ProgressBuilder, pages::Page, redirects::Redirect};
-
 #[derive(Serialize, Deserialize)]
-pub struct PageLookup {
+pub struct PageMap {
     // id -> name
     id_to_name: HashMap<i32, String>,
     // name -> id
@@ -14,13 +15,13 @@ pub struct PageLookup {
     id_to_redirect: HashMap<i32, i32>,
 }
 
-pub struct PageLookupResult {
+pub struct PageMapResult {
     pub id: i32,
     pub title: String,
     pub redirect: Option<i32>,
 }
 
-impl PageLookup {
+impl PageMap {
     fn new_internal(
         pages: VecDeque<Page>,
         redirect: VecDeque<Redirect>,
@@ -84,27 +85,27 @@ impl PageLookup {
         self.id_to_redirect.get(&id).copied()
     }
 
-    pub fn lookup_title(&self, title: &str) -> Option<PageLookupResult> {
+    pub fn lookup_title(&self, title: &str) -> Option<PageMapResult> {
         let id = self.name_to_id(title)?;
         let redirect = self.id_to_redirect(id);
-        Some(PageLookupResult {
+        Some(PageMapResult {
             id,
             title: title.to_string(),
             redirect,
         })
     }
 
-    pub fn lookup_id(&self, id: i32) -> Option<PageLookupResult> {
+    pub fn lookup_id(&self, id: i32) -> Option<PageMapResult> {
         let title = self.id_to_name(id)?.to_string();
         let redirect = self.id_to_redirect(id);
-        Some(PageLookupResult {
+        Some(PageMapResult {
             id,
             title,
             redirect,
         })
     }
 
-    pub fn resolve_by_title(&self, title: &str) -> Option<PageLookupResult> {
+    pub fn resolve_by_title(&self, title: &str) -> Option<PageMapResult> {
         let mut page = self.lookup_title(title)?;
         while let Some(redirect) = page.redirect {
             page = self.lookup_id(redirect)?;

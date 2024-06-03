@@ -1,18 +1,18 @@
 use serde::{Deserialize, Serialize};
 
-use crate::{indication::ProgressBuilder, ResolvedLink};
+use crate::{data::links::LinkResolved, indication::ProgressBuilder};
 use std::collections::{HashMap, VecDeque};
 
 #[derive(Debug, Serialize, Deserialize)]
-pub struct RemappedLinks {
+pub struct LinkMap {
     forward: HashMap<i32, Vec<i32>>,
 }
 
-impl RemappedLinks {
+impl LinkMap {
     pub fn new_with_progress(
-        mut links: VecDeque<ResolvedLink>,
+        mut links: VecDeque<LinkResolved>,
         progress: ProgressBuilder,
-    ) -> RemappedLinks {
+    ) -> LinkMap {
         let mut map: HashMap<i32, Vec<i32>> = HashMap::new();
 
         let progress = progress.with_len(links.len() as u64).build();
@@ -43,11 +43,11 @@ impl RemappedLinks {
 
         progress.finish();
 
-        RemappedLinks { forward: map }
+        LinkMap { forward: map }
     }
 
-    pub fn new(links: VecDeque<ResolvedLink>) -> RemappedLinks {
-        RemappedLinks::new_with_progress(links, ProgressBuilder::empty())
+    pub fn new(links: VecDeque<LinkResolved>) -> LinkMap {
+        LinkMap::new_with_progress(links, ProgressBuilder::empty())
     }
 
     pub fn get(&self, from: i32) -> Option<&Vec<i32>> {

@@ -1,4 +1,4 @@
-#![allow(dead_code)]
+#![allow(dead_code)] // todo: remove this when tests are implemented
 use std::time::Duration;
 
 use indicatif::{ProgressBar, ProgressStyle};
