@@ -15,6 +15,7 @@ pub struct PageMap {
     id_to_redirect: HashMap<i32, i32>,
 }
 
+#[derive(Debug, PartialEq)]
 pub struct PageMapResult {
     pub id: i32,
     pub title: String,
@@ -59,10 +60,6 @@ impl PageMap {
             name_to_id,
             id_to_redirect,
         }
-    }
-
-    pub fn new(pages: VecDeque<Page>, redirect: VecDeque<Redirect>) -> Self {
-        Self::new_internal(pages, redirect, ProgressBuilder::empty())
     }
 
     pub fn new_with_progress(
@@ -112,4 +109,127 @@ impl PageMap {
         }
         Some(page)
     }
+}
+
+#[test]
+fn new_page_map() {
+    let pages = {
+        let pages = vec![
+            Page {
+                id: 1,
+                title: "Page 1".to_string(),
+                redirect: false,
+            },
+            Page {
+                id: 2,
+                title: "Page 2".to_string(),
+                redirect: false,
+            },
+            Page {
+                id: 3,
+                title: "Also Page 2".to_string(),
+                redirect: true,
+            },
+        ];
+        VecDeque::from(pages)
+    };
+
+    let redirects = {
+        let redirects = vec![Redirect {
+            id: 3,
+            title: "Page 2".to_string(),
+        }];
+        VecDeque::from(redirects)
+    };
+
+    let map = PageMap::new_with_progress(pages, redirects, ProgressBuilder::empty());
+
+    assert_eq!(map.name_to_id("Page 1"), Some(1));
+    assert_eq!(map.name_to_id("Page 2"), Some(2));
+    assert_eq!(map.name_to_id("Also Page 2"), Some(3));
+
+    assert_eq!(map.id_to_name(1), Some("Page 1"));
+    assert_eq!(map.id_to_name(2), Some("Page 2"));
+    assert_eq!(map.id_to_name(3), Some("Also Page 2"));
+
+    assert_eq!(map.id_to_redirect(1), None);
+    assert_eq!(map.id_to_redirect(2), None);
+    assert_eq!(map.id_to_redirect(3), Some(2));
+
+    assert_eq!(
+        map.lookup_title("Page 1"),
+        Some(PageMapResult {
+            id: 1,
+            title: "Page 1".to_string(),
+            redirect: None
+        })
+    );
+    assert_eq!(
+        map.lookup_title("Page 2"),
+        Some(PageMapResult {
+            id: 2,
+            title: "Page 2".to_string(),
+            redirect: None
+        })
+    );
+    assert_eq!(
+        map.lookup_title("Also Page 2"),
+        Some(PageMapResult {
+            id: 3,
+            title: "Also Page 2".to_string(),
+            redirect: Some(2)
+        })
+    );
+
+    assert_eq!(
+        map.lookup_id(1),
+        Some(PageMapResult {
+            id: 1,
+            title: "Page 1".to_string(),
+            redirect: None
+        })
+    );
+    assert_eq!(
+        map.lookup_id(2),
+        Some(PageMapResult {
+            id: 2,
+            title: "Page 2".to_string(),
+            redirect: None
+        })
+    );
+    assert_eq!(
+        map.lookup_id(3),
+        Some(PageMapResult {
+            id: 3,
+            title: "Also Page 2".to_string(),
+            redirect: Some(2)
+        })
+    );
+
+    assert_eq!(
+        map.resolve_by_title("Page 1"),
+        Some(PageMapResult {
+            id: 1,
+            title: "Page 1".to_string(),
+            redirect: None
+        })
+    );
+
+    assert_eq!(
+        map.resolve_by_title("Page 2"),
+        Some(PageMapResult {
+            id: 2,
+            title: "Page 2".to_string(),
+            redirect: None
+        })
+    );
+
+    assert_eq!(
+        map.resolve_by_title("Also Page 2"),
+        Some(PageMapResult {
+            id: 2,
+            title: "Page 2".to_string(),
+            redirect: None
+        })
+    );
 }

@@ -32,6 +32,10 @@ where
     C: Clone,
     C: Send,
 {
+    if threads < 2 {
+        panic!("Threads must be greater than or equal 2");
+    }
+
     let (tx, rx) = crossbeam_channel::bounded(0);
 
     let reader_thread = std::thread::spawn(move || {
@@ -90,4 +94,50 @@ where
     reader_thread.join().expect("Error joining thread");
 
     output
+}
+
+mod test {
+    #[allow(unused_imports)]
+    use std::{
+        env::temp_dir,
+        io::Write,
+        sync::{Arc, Mutex},
+    };
+
+    #[test]
+    fn all_lines_are_read() {
+        let dir = temp_dir();
+        let file_path = dir.join("test.txt");
+
+        // create file
+        {
+            let file = std::fs::File::create(&file_path).expect("Unable to create file");
+            let mut writer = std::io::BufWriter::new(file);
+            for i in 0..1000 {
+                writeln!(writer, "{}", i).expect("Unable to write to file");
+            }
+        }
+
+        let call_count = Arc::new(Mutex::new(0));
+
+        // parse file
+        let result = super::parse_file_async(
+            file_path.to_str().unwrap().to_string(),
+            2,
+            |line, ctx| {
+                *ctx.lock().unwrap() += 1;
+                vec![line.parse::<i32>().unwrap()]
+            },
+            call_count.clone(),
+        );
+
+        // check that all lines are read
+        assert_eq!(result.len(), 1000);
+        for i in 0..1000 {
+            assert!(result.contains(&i));
+        }
+
+        // check parser call count
+        assert_eq!(*call_count.lock().unwrap(), 1000);
+    }
 }

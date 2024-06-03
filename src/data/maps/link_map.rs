@@ -21,7 +21,11 @@ impl LinkMap {
 
         let (shrink_every, progress_every) = {
             let links_count = links.len();
-            (links_count / 1000, links_count / 1000)
+            if links_count < 1000 {
+                (1, 1)
+            } else {
+                (links_count / 1000, links_count / 1000)
+            }
         };
 
         while let Some((from, to)) = links.pop_front() {
@@ -46,11 +50,18 @@ impl LinkMap {
         LinkMap { forward: map }
     }
 
-    pub fn new(links: VecDeque<LinkResolved>) -> LinkMap {
-        LinkMap::new_with_progress(links, ProgressBuilder::empty())
-    }
-
     pub fn get(&self, from: i32) -> Option<&Vec<i32>> {
         self.forward.get(&from)
     }
+}
+
+#[test]
+fn new_link_map() {
+    let links = VecDeque::from(vec![(1, 2), (1, 3), (3, 2)]);
+
+    let map = LinkMap::new_with_progress(links, ProgressBuilder::empty());
+
+    assert_eq!(map.get(1), Some(&vec![2, 3]));
+    assert_eq!(map.get(2), None);
+    assert_eq!(map.get(3), Some(&vec![2]));
 }
