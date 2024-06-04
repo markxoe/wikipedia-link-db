@@ -3,7 +3,7 @@ use clap::Args;
 use crate::{
     data::{
         algorithm::bfs,
-        database,
+        database::Database,
         maps::page_map::{PageMap, PageMapResult},
     },
     indication::ProgressBuilder,
@@ -31,7 +31,7 @@ fn interactive_cmd(args: &InteractiveArgs) {
         .with_message("📝 Deserializing DB")
         .build();
     spinner.enable_background();
-    let data = database::deserialize(&db);
+    let data = Database::from_file(&db);
     spinner.finish();
 
     println!(
