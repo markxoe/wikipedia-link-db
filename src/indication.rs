@@ -1,4 +1,3 @@
-#![allow(dead_code)] // todo: remove this when tests are implemented
 use std::time::Duration;
 
 use indicatif::{ProgressBar, ProgressStyle};
@@ -73,6 +72,7 @@ impl ProgressReporter {
         }
     }
 
+    #[cfg(test)]
     pub fn new_empty() -> Self {
         Self {
             progress: None,
@@ -106,6 +106,7 @@ impl ProgressReporter {
 enum ProgressType {
     Progress,
     Spinner,
+    #[cfg(test)]
     Empty,
 }
 
@@ -119,6 +120,7 @@ pub struct ProgressBuilder {
 }
 
 impl ProgressBuilder {
+    #[cfg(test)]
     pub fn empty() -> Self {
         Self {
             bar_type: ProgressType::Empty,
@@ -129,6 +131,7 @@ impl ProgressBuilder {
             step: None,
         }
     }
+
     pub fn new() -> Self {
         Self {
             bar_type: ProgressType::Progress,
@@ -172,6 +175,7 @@ impl ProgressBuilder {
         self
     }
 
+    #[cfg(test)]
     fn build_empty(self) -> ProgressReporter {
         ProgressReporter::new_empty()
     }
@@ -202,6 +206,7 @@ impl ProgressBuilder {
         match self.bar_type {
             ProgressType::Progress => self.build_progress(),
             ProgressType::Spinner => self.build_spinner(),
+            #[cfg(test)]
             ProgressType::Empty => self.build_empty(),
         }
     }
