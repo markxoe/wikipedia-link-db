@@ -4,6 +4,21 @@ use log::debug;
 
 use crate::data::maps::link_map::LinkMap;
 
+fn rebuild_path(predecessors: HashMap<i32, i32>, start: i32, end: i32) -> Vec<i32> {
+    let mut out_path = VecDeque::new();
+    out_path.push_front(end);
+    let mut at = end;
+    while let Some(&node) = predecessors.get(&at) {
+        if at == start {
+            break;
+        }
+        out_path.push_front(node);
+        at = node;
+    }
+
+    Vec::from(out_path)
+}
+
 pub fn find_shortest_path(start: i32, end: i32, links: &LinkMap) -> Option<Vec<i32>> {
     if start == end {
         return Some(vec![start]);
@@ -12,6 +27,7 @@ pub fn find_shortest_path(start: i32, end: i32, links: &LinkMap) -> Option<Vec<i
     let mut queue = VecDeque::new();
     let mut predecessor = HashMap::new();
     let mut visited = HashSet::new(); // note: having a set of visited nodes improves performance by a few percent while increasing memory usage
+
     queue.push_back(start);
     predecessor.insert(start, start);
     visited.insert(start);
@@ -20,9 +36,11 @@ pub fn find_shortest_path(start: i32, end: i32, links: &LinkMap) -> Option<Vec<i
 
     while let Some(at) = queue.pop_front() {
         let neighbors = links.get(at);
+
         if neighbors.is_none() {
             continue;
         }
+
         for &neighbor in neighbors.unwrap() {
             if visited.contains(&neighbor) {
                 continue;
@@ -33,19 +51,8 @@ pub fn find_shortest_path(start: i32, end: i32, links: &LinkMap) -> Option<Vec<i
             visited.insert(neighbor);
 
             if neighbor == end {
-                let mut out_path = VecDeque::new();
-                out_path.push_front(neighbor);
-                let mut at = neighbor;
-                while let Some(&node) = predecessor.get(&at) {
-                    if at == start {
-                        break;
-                    }
-                    out_path.push_front(node);
-                    at = node;
-                }
-
                 debug!("Found path in {} steps", steps);
-                return Some(Vec::from(out_path));
+                return Some(rebuild_path(predecessor, start, end));
             }
         }
 

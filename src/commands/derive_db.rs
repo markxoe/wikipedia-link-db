@@ -3,7 +3,7 @@ use log::info;
 
 use crate::{
     data::{
-        database,
+        database::Database,
         maps::{link_map::LinkMap, page_map::PageMap},
         parsers::{links, pages, redirects},
     },
@@ -112,7 +112,8 @@ fn derive_db_command(args: DeriveDbArgs) {
             .with_finish_message("Serialized and written to file")
             .build();
         spinner.enable_background();
-        database::serialize(output.as_str(), &links, &lookup);
+        Database::new(links, lookup).to_file(output.as_str());
+
         spinner.finish();
     }
 }
