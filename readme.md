@@ -2,6 +2,9 @@
 
 Primary goal of this project: Build a program that can quickly return the shortest path between 2 Wikipedia pages via page links
 
+![](./assets/derive.gif)
+![](./assets/interactive.gif)
+
 ## Implementation details
 
 - Reading the Wikipedia dump files `-page.sql`, `-redirect.sql` and `-pagelinks.sql` using one file-reading thread (line-by-line) and at least one parsing thread (work is spread with a queue) which uses a regex that parses the sql insert statements
