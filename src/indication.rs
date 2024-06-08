@@ -2,7 +2,7 @@ use std::time::Duration;
 
 use indicatif::{ProgressBar, ProgressStyle};
 
-fn progressbar_template(len: u64) -> ProgressBar {
+fn progressbar(len: u64) -> ProgressBar {
     let pb = ProgressBar::new(len);
     pb.set_style(
        ProgressStyle::with_template(
@@ -44,7 +44,7 @@ impl ProgressReporter {
         finish_message: &'static str,
         len: u64,
     ) -> Self {
-        let progress = progressbar_template(len);
+        let progress = progressbar(len);
         progress.set_prefix(format!("[{}/{}]", step, steps));
         progress.set_message(message.clone());
 
@@ -196,8 +196,8 @@ impl ProgressBuilder {
         let finish_message = self.finish_message;
 
         let steps = self
-            .steps
-            .map(|steps| (steps, self.step.expect("only steps given, no step")));
+            .step
+            .map(|step| (step, self.steps.expect("only step given, steps missing")));
 
         ProgressReporter::new_spinner(message, finish_message, steps)
     }
